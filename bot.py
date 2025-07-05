@@ -6,8 +6,6 @@ import logging
 import requests
 import json
 from datetime import datetime
-import firebase_admin
-from firebase_admin import credentials, firestore
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -19,9 +17,7 @@ API_KEY = '7596820597:AAFnJkKIEV3zbXmvgG80vzAAJsQet59PEmM'
 # Pega tu clave de API de The Movie Database (TMDb) aquí. ¡Es crucial!
 TMDB_API_KEY = '42090effb6fe9ca05ecdf5cbbee24132'
 
-# IDs de los chats de trabajo (donde el bot NO hablará)
-# El bot ignorará los mensajes en estos grupos, excepto los comandos de admin.
-# CORRECCIÓN: Añadido el ID del chat que faltaba.
+# IDs de los chats de trabajo
 WORK_CHAT_IDS = [-1002399548246, -4634644543, -1002255075991] # GROUP_CHAT_ID, ADMIN_GROUP_ID y el nuevo chat
 ADMIN_GROUP_ID = -4634644543
 CHANNEL_ID = -1002176864902
@@ -31,33 +27,34 @@ ADMIN_USER_ID = 7753923473
 GEMINI_API_KEY = "AIzaSyAK4dCqDDoXXOK4IoTsjtQT76vZ9nXDRf4"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
-# Inicializar Firebase
-firebase_config = {
-  "type": "service_account",
-  "project_id": "base-de-datos-elecciones-6e9d5",
-  "private_key_id": "9172244f8aeb6e1f45a17fcdc050f1c0c6e97893",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC4QGu93gYycIzd\nqrtwSSMvgPAzaBV9R/HoNK/9lwX0ZJpuqgp0IMmD5eFOvuaEuLsi5NpNH80jL2ZZ\nZc6qTngvrbE3D480YzpZClrx78nPYhHqqy9RZdXLIuU5EyVVKVmCAOlNRZPC2K1C\nv4fxY8hnWrodO5UTitNn20PX+5Z3LtlPYCCKN2vzHqEkCW/s8WWDgeTS12Ot4cgr\nObn74urTkow5JyNhNxUgi0/Ity4P9HpxLo2izv21gq76kRokHw7dM2EugT56IYQp\n1AgcEfny2VqrcNTQXPNP0ytqyaA1zzK4ugK8sbWyo/TO1dGfNyvt0r50FpMw2pZs\nCcC1eQW9AgMBAAECggEAC+7cK4FYLGcesHKQzi5mcXqr0+B/V8xTjgLvjQB9eb0U\nRWuM3sWK15iJVZTGkDz4ncNtogYXvpogylRuJJiNbyUUL6k50J5GlqK1jirGCsDi\nwSySFXb/eDcL2nzzc4cIjYNqmL8TWVC4M/T8pHUecxcsq50CxC+/DmBkjfX04kYR\n1K3XawJGnkotjQwetZXX0L3ka6FohdlQJAF9NnVm5bgMRdQkRkqOpJWMXFOUbAvQ\nKe2WBWyzcaJBgjxOw7npLhE/1qdjhwZCZi7WrU2aAZvE6wkX4BxvGL5o8ROJQAHa\nXQuHx6rm5DaY787EvwMdKKserD/LTKKetnu/Q3cxUQKBgQDhzDZXnnei8iyofwLH\nYraGNEEi+oip5ijk0JW3OZ6tOKuN12xg95gDznfiPeG/COgjplx84Jpeo+aqs3/w\nBNG6KSNYHPb83+3mq4lwvsMOKZB9mB9bFMQZ1hhLprB7NkyKDLqu9nT4fWjMN7A7\nyWaJkuPWfEGMED447nB4duC+yQKBgQDQ5ZWPFuREXuVBN9k6GAYDfhLhDkSk5W+6\niGkhu6AL1ttp/PsysJ7M2z8/tjPekcjtG9YjwbWrcWe3aKR62YJKqZo/x0+PeNx3\nj0kPzTuplGdCiMcfQB3y05iyBOf/5xuALXdkOlwRfSfJ9ul60/veWZbrJHdMR+jp\neL72kUHFVQKBgQDF5NKjzDESUKmvK1HmKa/KwzVrUKRCM4QXtm/g29EkBAznDazg\n9171xxju4kldwpKh3AYnNDpXQ9LAPP2eALtHKxLdANW/HwtEJYcZlzcgzHDkglTI\n4NRVyHwWoYr/EcHXI/zhpwMxXchhY1VDsOn7HRAuRUy1Uu8VunQ8QAQNcQKBgDot\ndnWfXntcImUDdNAlGKeoWQGsw5lY/MDqdL0cT/p8ICdoeV0oq1FKTlckG1YFK/w9\nIGpc7IeO0d/WmNhN82dvzLGuhI3kjyINGb/43IDh/9Ab37joVm7mV0Rc8W/noVUV\nVIbpafLE9GvfBC9dEmxebxWV1lO8QzWilyx8T+DxAoGBAIfkGYMPr+a8bf648qe+\nXczAndOdzZP7mL2McSC+tHS/0TX3DDE0l4yWG/N81qzrHnZXqQjT//ro+XH8dMGI\n0VIou5MO3tSvWmRP8jY101HNhuklaIMguRVUVzevn0CSkTSG2HKdI0U15aFWSEPN\nA52YcHLW+8rzljIFKhIW3Tou\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-fbsvc@base-de-datos-elecciones-6e9d5.iam.gserviceaccount.com",
-  "client_id": "116973578837058387528",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40base-de-datos-elecciones-6e9d5.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
-}
-
-try:
-    cred = credentials.Certificate(firebase_config)
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app(cred)
-    db = firestore.client()
-    logger.info("Firebase inicializado correctamente")
-except Exception as e:
-    logger.error(f"Error al inicializar Firebase: {e}")
-    db = None
+# --- NUEVO: CONFIGURACIÓN DE BASE DE DATOS LOCAL ---
+DB_FILE = 'movies_database.json'
 
 bot = telebot.TeleBot(API_KEY)
 USER_STATES = {}
+
+# --- NUEVO: FUNCIONES PARA MANEJAR LA BASE DE DATOS JSON ---
+def load_database():
+    """Carga la base de datos desde el archivo JSON."""
+    try:
+        with open(DB_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.warning(f"El archivo {DB_FILE} no fue encontrado. Se creará uno nuevo.")
+        return []
+    except json.JSONDecodeError:
+        logger.error(f"Error al decodificar el archivo JSON {DB_FILE}. Se creará uno nuevo.")
+        return []
+
+def save_database(data):
+    """Guarda los datos en el archivo JSON."""
+    try:
+        with open(DB_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logger.error(f"No se pudo guardar la base de datos en {DB_FILE}: {e}")
+        return False
 
 def create_keyboard(buttons):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -66,90 +63,73 @@ def create_keyboard(buttons):
 
 def create_inline_keyboard(buttons):
     keyboard = InlineKeyboardMarkup()
-    # Permite crear filas de botones
     for row in buttons:
         keyboard.row(*[InlineKeyboardButton(text, callback_data=data) for text, data in row])
     return keyboard
 
+# --- MODIFICADO: USA LA BASE DE DATOS LOCAL ---
 def save_movie_to_database(title_spanish, title_original, year, media_type, plot, poster_url, message_link):
-    try:
-        if not db:
-            logger.error("Base de datos no inicializada")
-            return False
-        doc_ref = db.collection('movies').document()
-        doc_ref.set({
-            'title_spanish': title_spanish,
-            'title_original': title_original,
-            'year': year,
-            'media_type': media_type,
-            'plot': plot,
-            'poster_url': poster_url,
-            'message_link': message_link,
-            'created_at': datetime.now(),
-            'status': 'active'
-        })
-        logger.info(f"Película guardada en BD: {title_spanish}")
+    """Guarda una nueva película en el archivo JSON."""
+    logger.info(f"Intentando guardar '{title_spanish}' en la base de datos local.")
+    movies_db = load_database()
+    
+    new_movie = {
+        'title_spanish': title_spanish,
+        'title_original': title_original,
+        'year': year,
+        'media_type': media_type,
+        'plot': plot,
+        'poster_url': poster_url,
+        'message_link': message_link,
+        'created_at': datetime.now().isoformat(), # Guardar fecha como string
+        'status': 'active'
+    }
+    
+    movies_db.append(new_movie)
+    
+    if save_database(movies_db):
+        logger.info(f"Película '{title_spanish}' guardada exitosamente en {DB_FILE}.")
         return True
-    except Exception as e:
-        logger.error(f"Error al guardar en BD: {e}")
+    else:
+        logger.error(f"Fallo al guardar la película '{title_spanish}'.")
         return False
 
-# --- FUNCIÓN CORREGIDA PARA ELIMINAR DUPLICADOS ---
+# --- MODIFICADO: USA LA BASE DE DATOS LOCAL ---
 def search_movie_in_database(query):
-    """Busca en la base de datos y devuelve solo resultados únicos."""
-    try:
-        if not db:
-            return []
-        movies_ref = db.collection('movies')
-        query_lower = query.lower()
-        
-        results = []
-        found_movies = set() # Usar un set para rastrear películas únicas
+    """Busca en el archivo JSON y devuelve solo resultados únicos."""
+    logger.info(f"Buscando '{query}' en la base de datos local.")
+    movies_db = load_database()
+    query_lower = query.lower()
+    
+    results = []
+    found_movies = set()
 
-        docs = movies_ref.stream()
-        for doc in docs:
-            movie_data = doc.to_dict()
+    for movie_data in movies_db:
+        title_spanish = movie_data.get('title_spanish', '').lower()
+        title_original = movie_data.get('title_original', '').lower()
+        year = movie_data.get('year', '')
+
+        unique_identifier = (title_spanish, year)
+
+        if (query_lower in title_spanish or
+            query_lower in title_original or
+            any(word in title_spanish for word in query_lower.split()) or
+            any(word in title_original for word in query_lower.split())):
             
-            title_spanish = movie_data.get('title_spanish', '').lower()
-            title_original = movie_data.get('title_original', '').lower()
-            year = movie_data.get('year', '')
-
-            # Identificador único para cada película (título en español + año)
-            unique_identifier = (title_spanish, year)
-
-            # Comprobar si la consulta coincide con el título
-            if (query_lower in title_spanish or
-                query_lower in title_original or
-                any(word in title_spanish for word in query_lower.split()) or
-                any(word in title_original for word in query_lower.split())):
+            if unique_identifier not in found_movies:
+                results.append(movie_data)
+                found_movies.add(unique_identifier)
                 
-                # Añadir solo si es una película nueva para esta búsqueda
-                if unique_identifier not in found_movies:
-                    if 'created_at' in movie_data and hasattr(movie_data['created_at'], 'isoformat'):
-                        movie_data['created_at'] = movie_data['created_at'].isoformat()
-                    results.append(movie_data)
-                    found_movies.add(unique_identifier)
-                    
-        return results
-    except Exception as e:
-        logger.error(f"Error al buscar en BD: {e}")
-        return []
+    logger.info(f"Se encontraron {len(results)} resultados únicos para '{query}'.")
+    return results
 
 def is_movie_query_with_gemini(text):
-    """Usa a Gemini para determinar si un mensaje es una consulta sobre películas."""
     try:
         prompt = f"""
         Analiza el siguiente mensaje de un usuario en un grupo de Telegram.
         Tu única tarea es determinar si el usuario está preguntando por una película o serie.
         Responde SOLAMENTE con la palabra 'BUSCAR' si la intención es encontrar o preguntar por la disponibilidad de una película o serie.
         De lo contrario, responde SOLAMENTE con la palabra 'IGNORAR'.
-
-        Ejemplos:
-        - Mensaje: "hola buenos dias, por casualidad tienen la pelicula el padrino?" -> Respuesta: BUSCAR
-        - Mensaje: "gracias por el aporte" -> Respuesta: IGNORAR
-        - Mensaje: "alguien sabe si ya subieron la ultima de spiderman?" -> Respuesta: BUSCAR
-        - Mensaje: "jajaja que buena escena" -> Respuesta: IGNORAR
-
         Mensaje del usuario: "{text}"
         """
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
@@ -161,15 +141,11 @@ def is_movie_query_with_gemini(text):
         return decision == 'BUSCAR'
     except Exception as e:
         logger.error(f"Error en is_movie_query_with_gemini: {e}")
-        # Fallback a palabras clave si Gemini falla
         return any(keyword in text.lower() for keyword in ['película', 'serie', 'tienen', 'busco', 'está'])
 
-# --- FUNCIÓN CORREGIDA CON INSTRUCCIONES ESTRICTAS ---
 def ask_gemini(user_question, movie_database=None):
-    """Consulta a Gemini con un prompt estricto para formatear la salida."""
     try:
         if movie_database is None:
-            # La función de búsqueda ya se encarga de eliminar duplicados
             movie_database = search_movie_in_database(user_question)
 
         context_prompt = f"""
@@ -246,9 +222,7 @@ def search_media_tmdb(query):
         logger.error(f"Error procesando datos de TMDb: {e}", exc_info=True)
         return None
 
-# --- NUEVA FUNCIÓN DE VALIDACIÓN DE PETICIONES ---
 def validate_petition_format(text):
-    """Valida y extrae datos de un texto de petición usando un formato estricto."""
     patterns = {
         'Nombre': re.compile(r"Nombre:(.*)", re.IGNORECASE),
         'Año': re.compile(r"Año:(.*)", re.IGNORECASE),
@@ -260,10 +234,9 @@ def validate_petition_format(text):
     for key, pattern in patterns.items():
         match = pattern.search(text)
         if not match:
-            return None # Si falta algún campo, la validación falla
+            return None
         data[key] = match.group(1).strip()
 
-    # El campo de temporadas puede estar vacío, pero los otros no.
     if not data['Nombre'] or not data['Año'] or not data['Idioma']:
         return None
         
@@ -280,10 +253,8 @@ def send_welcome(message):
     bot.send_message(message.chat.id, welcome_message, reply_markup=keyboard)
     USER_STATES[message.chat.id] = 'WAITING_FOR_OPTION'
 
-# --- INICIO DE LA LÓGICA DE CONVERSACIÓN PQR ---
 @bot.message_handler(func=lambda message: USER_STATES.get(message.chat.id, '').startswith('CHATTING_WITH_ADMIN_'), content_types=['text', 'photo', 'video', 'document', 'sticker', 'audio', 'voice'])
 def user_chatting_with_admin(message):
-    """Manejador para cuando un usuario está en una conversación activa con un admin."""
     try:
         admin_chat_id = int(USER_STATES[message.chat.id].split('_')[-1])
         user_info = f"💬 Mensaje de {message.from_user.first_name} (@{message.from_user.username or 'N/A'}):"
@@ -295,7 +266,6 @@ def user_chatting_with_admin(message):
 
 @bot.message_handler(func=lambda message: USER_STATES.get(message.chat.id, '').startswith('CHATTING_WITH_USER_'), content_types=['text', 'photo', 'video', 'document', 'sticker', 'audio', 'voice'])
 def admin_chatting_with_user(message):
-    """Manejador para cuando un admin responde en una conversación activa."""
     try:
         user_id = int(USER_STATES[message.chat.id].split('_')[-1])
         admin_name = message.from_user.first_name
@@ -312,17 +282,10 @@ def admin_chatting_with_user(message):
         bot.send_message(message.chat.id, "Hubo un error al enviar tu respuesta. La conversación podría haberse cerrado.")
 
 
-# --- MANEJADOR UNIFICADO PARA GRUPOS ---
 @bot.message_handler(func=lambda message: message.chat.type in ['group', 'supergroup'], content_types=['document', 'video', 'text'])
 def unified_group_handler(message):
-    """
-    Este manejador unificado procesa todos los mensajes de grupos para evitar conflictos.
-    Prioriza la subida de archivos en los grupos de trabajo.
-    """
     logger.info(f"Manejador unificado de grupos activado para el chat {message.chat.id} con tipo de contenido {message.content_type}")
 
-    # --- LÓGICA DE SUBIDA DE ARCHIVOS ---
-    # Se activa si es un video/documento Y está en un grupo de trabajo.
     if message.chat.id in WORK_CHAT_IDS and message.content_type in ['document', 'video']:
         logger.info(f"Detectada subida de multimedia en grupo de trabajo. Procesando...")
         try:
@@ -363,7 +326,7 @@ def unified_group_handler(message):
                 caption = (f"*{display_title}* ({year})\n\n"
                            f"{plot_es[:200]}...\n\n"
                            f"[VER {media_type} {display_title.upper()} AQUÍ]({message_link})\n\n"
-                           "[CINEPELIS 🍿](https://t.me/pelicuilasymasg)")
+                           "[CINEPELIS �](https://t.me/pelicuilasymasg)")
                 try:
                     if poster_url:
                         logger.info(f"Enviando foto al canal {CHANNEL_ID}")
@@ -381,10 +344,8 @@ def unified_group_handler(message):
         except Exception as e:
             logger.error(f"Error en handle_media_upload: {e}", exc_info=True)
             bot.reply_to(message, "Ocurrió un error general al procesar el archivo.")
-        return # Termina la ejecución para este mensaje
+        return
 
-    # --- LÓGICA DE IA EN GRUPOS PÚBLICOS ---
-    # Se activa si es un mensaje de texto Y NO está en un grupo de trabajo.
     if message.chat.id not in WORK_CHAT_IDS and message.content_type == 'text':
         logger.info(f"Detectado mensaje de texto en grupo público. Consultando a Gemini...")
         if is_movie_query_with_gemini(message.text):
@@ -397,7 +358,7 @@ def unified_group_handler(message):
                 bot.reply_to(message, "Lo siento, tuve un problema para procesar tu búsqueda. ¡Pero no te rindas! Inténtalo de nuevo.")
         else:
             logger.info("Gemini determinó que el mensaje no es una consulta de película. Ignorando.")
-        return # Termina la ejecución para este mensaje
+        return
     
     logger.info(f"El mensaje en el chat {message.chat.id} no cumple ninguna condición del manejador unificado. Ignorando.")
 
@@ -488,7 +449,6 @@ def handle_complaint(message):
 
 @bot.message_handler(func=lambda message: USER_STATES.get(message.chat.id) == 'WAITING_FOR_REQUEST', content_types=['text', 'photo'])
 def handle_request(message):
-    """Manejador para recibir y validar peticiones con formato estricto."""
     petition_text = message.text if message.content_type == 'text' else message.caption
     
     if not petition_text:
@@ -504,7 +464,6 @@ def handle_request(message):
             [("Pedir más información", f"info_{message.chat.id}")]
         ])
         
-        # Enviar la petición al grupo de admin
         if message.content_type == 'photo':
             bot.forward_message(ADMIN_GROUP_ID, message.chat.id, message.message_id)
         
@@ -512,7 +471,6 @@ def handle_request(message):
         bot.send_message(message.chat.id, "✅ ¡Petición recibida y validada! Ha sido enviada a los administradores. Te notificaremos sobre su estado.")
         ask_for_more(message.chat.id)
     else:
-        # Formato incorrecto
         error_message = """
         ❌ **Formato de petición incorrecto.**
 
@@ -528,7 +486,6 @@ def handle_request(message):
         Inténtalo de nuevo.
         """
         bot.send_message(message.chat.id, error_message, parse_mode='Markdown')
-        # Mantenemos al usuario en el estado de espera para que pueda corregir su petición.
 
 @bot.message_handler(func=lambda message: USER_STATES.get(message.chat.id) == 'SEARCHING_MOVIE')
 def handle_movie_search(message):
